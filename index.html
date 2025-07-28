@@ -2,274 +2,285 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Générateur d'Histoire Interactive IA - OpenRouter</title>
+  <title>Générateur de prompt d’histoire interactive avec compagnons & icônes</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      font-family: 'Comic Sans MS', cursive, sans-serif;
-      background: #f0f6fc;
-      margin: 0;
-      padding: 0;
+    body { font-family: 'Arial Rounded MT Bold', Arial, sans-serif; background: #eef8fb; margin: 0; padding: 0;}
+    .container { max-width: 520px; margin: 0 auto; background: #fff; border-radius: 14px; box-shadow: 0 4px 18px rgba(0,0,0,0.10); padding: 20px 5vw 24px 5vw; margin-top: 16px;}
+    h1 { text-align: center; color: #117a8b; font-size: 1.5em; margin: 8px 0 18px 0;}
+    label { display: block; margin: 12px 0 4px; font-weight: bold; font-size:1.05em; color: #223; }
+    input[type="text"], select, input[type="number"] {
+      width: 100%; padding: 11px; font-size: 1em; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 6px; box-sizing: border-box;
     }
-    .container {
-      max-width: 480px;
-      margin: 40px auto;
-      background: white;
-      border-radius: 18px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-      padding: 30px;
-    }
-    h1 {
-      text-align: center;
-      color: #1cb69b;
-      margin-bottom: 20px;
-    }
-    .question, .story {
-      font-size: 1.18em;
-      margin-bottom: 18px;
-      white-space: pre-line;
-    }
-    label {
-      display: block;
-      margin: 13px 0 6px;
-    }
-    input, select {
-      padding: 8px;
-      width: 90%;
-      border-radius: 7px;
-      border: 1px solid #bbb;
-      font-size: 1em;
-    }
+    .select-inline { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
     button {
-      margin: 14px 0;
-      background: #1cb69b;
-      color: white;
-      font-size: 1.08em;
-      border: none;
-      border-radius: 8px;
-      padding: 11px;
-      width: 100%;
-      cursor: pointer;
-      transition: background 0.3s ease;
+      margin-top: 16px; width: 100%; padding: 13px; background-color: #117a8b; border: none; border-radius: 8px; color: white;
+      font-size: 1.09em; font-weight: 600; cursor: pointer; transition: background 0.25s;
     }
-    button:hover {
-      background: #148f7d;
+    button:hover, button:active { background-color: #0e5f67; }
+    #copyBtn { margin-top: 12px; background-color: #bbe6ee; color: #0e5f67; border: 1px solid #bbe6ee; font-size: 1em; font-weight: 500;}
+    #copyBtn.copied { background: #d4ffd9; color: #249d31; border-color: #d4ffd9; }
+    textarea {
+      margin-top: 20px; width: 100%; min-height: 170px; font-size: 1em; padding: 12px; border: 1px solid #aaa; border-radius: 8px;
+      resize: vertical; font-family: monospace; background: #f9f9f9; box-sizing: border-box;
     }
-    .choices button {
-      margin: 8px 0;
-      width: 100%;
-      font-size: 1.1em;
-    }
-    .loader {
-      text-align: center;
-    }
-    .footer {
-      font-size: 0.85em;
-      color: #888;
-      text-align: center;
-      margin-top: 20px;
+    .option-group { display: flex; flex-direction: row; align-items: center; gap: 7px; margin-bottom: 2px;}
+    .option-group img { width: 22px; height: 22px; vertical-align: middle;}
+    .icon-label {display:flex; align-items:center; gap:7px;}
+    .companion-block {background:#f3fbff; padding:12px 12px 4px 12px; margin-bottom:12px; border-radius:8px;}
+    .footer { font-size: 0.92em; color: #666; text-align: center; margin-top: 16px; margin-bottom: 8px;}
+    .delcomp { background: #f85e58; color: white; border: none; padding: 2px 9px; border-radius: 5px; font-size:.97em; margin-left:10px;}
+    .delcomp:hover { background: #b32621; }
+    @media (max-width: 600px) {
+      .container { padding: 7px 1vw 12px 1vw; font-size:1em; margin-top:2vw;}
+      h1 { font-size: 1.19em;}
+      label { font-size:1em;}
+      button { font-size: 1em; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Histoire Interactive IA</h1>
-    <div id="app">
-      Chargement...
+<div class="container">
+  <h1>Générateur de prompt d’histoire interactive</h1>
+  <form id="formPromptGen" autocomplete="off">
+    <label for="prenom">Prénom du héros/héroïne</label>
+    <input type="text" id="prenom" placeholder="Exemple : Jade" />
+
+    <label for="age">Âge de l’enfant</label>
+    <div class="select-inline">
+      <input type="number" min="2" max="18" id="age" value="8" style="max-width:80px;" />
+      <span>ans</span>
     </div>
-    <div class="footer">
-      Généré avec <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer">OpenRouter</a>
+
+    <label>Type de héros/héroïne</label>
+    <div class="option-group">
+      <select id="typeHero"></select>
     </div>
+
+    <label>Lieu de l’aventure</label>
+    <div class="option-group">
+      <select id="lieu"></select>
+    </div>
+
+    <label>Objet magique</label>
+    <div class="option-group">
+      <select id="objetMagique"></select>
+    </div>
+
+    <label>Type d’histoire</label>
+    <div class="option-group">
+      <select id="typeHistoire"></select>
+    </div>
+
+    <label for="nbEtapes">Nombre d’étapes</label>
+    <select id="nbEtapes">
+      <option value="5">5 étapes</option>
+      <option value="6" selected>6 étapes</option>
+      <option value="7">7 étapes</option>
+      <option value="8">8 étapes</option>
+      <option value="9">9 étapes</option>
+      <option value="10">10 étapes</option>
+    </select>
+
+    <div id="compagnonsZone"></div>
+    <button type="button" onclick="ajouterCompagnon()" style="margin-top:10px;background:#8adb92;color:#015d21;">➕ Ajouter un compagnon</button>
+    <button type="submit">Générer le prompt</button>
+  </form>
+  <button id="copyBtn" type="button" style="display:none;">Copier le prompt</button>
+  <textarea id="zonePrompt" readonly placeholder="Le prompt généré apparaîtra ici..."></textarea>
+  <div class="footer">
+    Remplis les champs et copie le prompt généré à coller dans ChatGPT ou un autre assistant IA.<br />
+    Pensé pour être agréable aussi sur mobile 📱.
   </div>
+</div>
+<script>
+const TYPES_HERO = [
+  ["Chevalier ou chevalière","🛡️"],
+  ["Fée","🧚"],
+  ["Explorateur·rice","🧭"],
+  ["Robot","🤖"],
+  ["Pirate","🏴‍☠️"],
+  ["Magicien·ne","🪄"],
+  ["Dragon apprivoisé","🐉"],
+  ["Sirène ou Triton","🧜"],
+  ["Gardien·ne de la forêt","🌳"],
+  ["Inventeur·rice génial·le","🛠️"],
+  ["Fantôme joueur","👻"],
+  ["Super-héros·ïne","🦸"],
+  ["Licorne magique","🦄"],
+  ["Chevauchant·e de nuages","☁️"],
+  ["Petit monstre amical","👾"]
+];
+const LIEUX = [
+  ["Forêt enchantée","🌲"],
+  ["Château ancien","🏰"],
+  ["Île mystérieuse","🏝️"],
+  ["Montagne magique","⛰️"],
+  ["École extraordinaire","🏫"],
+  ["Village sous-marin","🏚️"],
+  ["Caverne secrète","⛺"],
+  ["Monde des rêves","💤"],
+  ["Planète lointaine","🪐"],
+  ["Jardin des géants","🌻"],
+  ["Tour de l’horloge magique","🕰️"],
+  ["Bibliothèque infinie","📚"],
+  ["Ville volante","🏙️"],
+  ["Désert étoilé","🏜️"],
+  ["Forêt de bambous géants","🎍"]
+];
+const OBJETS = [
+  ["Épée brillante","⚔️"],
+  ["Cape invisible","🧥"],
+  ["Médaillon aux animaux","🐾"],
+  ["Baguette magique","✨"],
+  ["Livre volant","📖"],
+  ["Sceptre des vents","🌬️"],
+  ["Anneau des étoiles","💍"],
+  ["Bottes de vitesse","🥾"],
+  ["Pendentif du temps","⌛"],
+  ["Flûte ensorcelée","🎶"],
+  ["Grimoire ancien","📙"],
+  ["Clé du mystère","🗝️"],
+  ["Chapeau farceur","🎩"],
+  ["Lentille magenta","🔮"]
+];
+const TYPES_HISTOIRE = [
+  ["Aventure mystère","🕵️"],
+  ["Histoire drôle","😂"],
+  ["Voyage extraordinaire","🧳"],
+  ["Enquête magique","🔍"],
+  ["École magique","🎒"],
+  ["Quête épique","🌟"],
+  ["Exploration fantastique","🧑‍🚀"],
+  ["Rencontre avec des créatures magiques","🐲"],
+  ["Chasse au trésor","💰"],
+  ["Défis enchantés","🪄"],
+  ["Course contre la montre","⏱️"],
+  ["Amitié et entraide","🤝"]
+];
 
-  <script src="https://sdk.openrouter.ai/v1.3.2/openrouter.js"></script>
-  <script>
-    // --- Variables d'état ---
-    const state = {
-      step: 0,               // 0 à 4 : création héros, puis aventure
-      heroName: "",
-      heroType: "",
-      place: "",
-      magicItem: "",
-      storyType: "",
-      history: [],           // choix faits (numéros)
-      currentParagraph: "",
-      currentChoices: [],
-      gameActive: false,
-    };
+function remplirSelect(select, options) {
+  select.innerHTML = '';
+  for (const [label, icone] of options) {
+    const el = document.createElement('option');
+    el.value = label;
+    el.innerHTML = `${icone} ${label}`;
+    select.appendChild(el);
+  }
+}
 
-    // Étapes de configuration du héros
-    const setupSteps = [
-      {
-        label: "Choisis un prénom pour le héros ou l’héroïne.",
-        input: "text",
-        key: "heroName"
-      },
-      {
-        label: "Sélectionne un type de héros :",
-        input: "select",
-        key: "heroType",
-        options: ["Chevalier ou chevalière", "Fée", "Explorateur·rice", "Robot", "Pirate", "Magicien·ne"]
-      },
-      {
-        label: "Choisis le lieu de l’aventure :",
-        input: "select",
-        key: "place",
-        options: ["Forêt enchantée", "Château ancien", "Île mystérieuse", "Montagne magique", "École extraordinaire"]
-      },
-      {
-        label: "Choisis un objet magique essentiel à l’aventure :",
-        input: "select",
-        key: "magicItem",
-        options: ["Épée brillante", "Cape invisible", "Médaillon aux animaux", "Baguette magique", "Livre volant"]
-      },
-      {
-        label: "Quel type d’histoire souhaites-tu vivre ?",
-        input: "select",
-        key: "storyType",
-        options: ["Aventure mystère", "Histoire drôle", "Voyage", "Enquête", "École magique"]
-      }
-    ];
+function compagnonBloc(idx) {
+  return `
+    <div class="companion-block" id="companBloc${idx}">
+      <label>Prénom du compagnon</label>
+      <input type="text" id="cmName${idx}" placeholder="Ex: Max, Plume, Zoé..." />
+      <label>Type</label>
+      <select id="cmType${idx}">
+        ${TYPES_HERO.map(([l,i])=>`<option>${i} ${l}</option>`).join('')}
+      </select>
+      <label>Objet magique</label>
+      <select id="cmObjet${idx}">
+        ${OBJETS.map(([l,i])=>`<option>${i} ${l}</option>`).join('')}
+      </select>
+      <button type="button" class="delcomp" onclick="enleverCompagnon(${idx})">🗑 Retirer</button>
+    </div>
+  `;
+}
+let compagnonsCount = 0;
+let compagnonsUsed = [];
 
-    // Instance OpenRouter client
-    const client = new OpenRouter();
+window.ajouterCompagnon = function(){
+  const zone = document.getElementById('compagnonsZone');
+  compagnonsUsed.push(compagnonsCount);
+  const bloc = document.createElement('div');
+  bloc.innerHTML = compagnonBloc(compagnonsCount);
+  zone.appendChild(bloc);
+  compagnonsCount++;
+};
+window.enleverCompagnon = function(idx){
+  compagnonsUsed = compagnonsUsed.filter(i => i !== idx);
+  const el = document.getElementById('companBloc'+idx);
+  if(el) el.remove();
+};
 
-    // Fonction pour afficher la configuration (étapes création héros)
-    function renderSetup() {
-      const s = setupSteps[state.step];
-      let html = `<div class="question">${s.label}</div>`;
-      if (s.input === "text") {
-        html += `<input id="inputField" type="text" value="${state[s.key] || ""}" placeholder="Ex : Jade, Léo, Mira" />`;
-      } else if (s.input === "select") {
-        html += `<select id="inputField">` + s.options.map(opt =>
-          `<option${state[s.key] === opt ? " selected" : ""}>${opt}</option>`
-        ).join('') + `</select>`;
-      }
-      html += `<button id="btnValidate">Valider</button>`;
-      document.getElementById("app").innerHTML = html;
+function genererPrompt() {
+  const prenom = document.getElementById('prenom').value.trim() || '[Prénom]';
+  let age = parseInt(document.getElementById('age').value, 10);
+  if (isNaN(age) || age < 2) age = 8;
+  if (age > 18) age = 18;
+  document.getElementById('age').value = age;
 
-      document.getElementById("btnValidate").onclick = () => {
-        const val = document.getElementById("inputField").value.trim();
-        if (val.length === 0) {
-          alert("Merci de faire un choix ou d'entrer un texte.");
-          return;
-        }
-        state[setupSteps[state.step].key] = val;
-        state.step++;
-        if (state.step < setupSteps.length) {
-          renderSetup();
-        } else {
-          startAdventure();
-        }
-      };
-    }
+  const typeHero = document.getElementById('typeHero').value;
+  const lieu = document.getElementById('lieu').value;
+  const objetMagique = document.getElementById('objetMagique').value;
+  const typeHistoire = document.getElementById('typeHistoire').value;
+  const nbEtapes = parseInt(document.getElementById('nbEtapes').value, 10);
 
-    // Fonction pour démarrer l’aventure après la configuration
-    async function startAdventure() {
-      state.gameActive = true;
-      state.history = [];
-      await requestNextStep();
-    }
+  // Gérer compagnons
+  let companionsTxt = '';
+  if (compagnonsUsed.length>0){
+    companionsTxt = '\\n- Compagnons : ';
+    companionsTxt += compagnonsUsed.map(idx=>{
+      const n=document.getElementById('cmName'+idx)?.value.trim()||'[Prénom]';
+      const t=document.getElementById('cmType'+idx)?.value||'';
+      const o=document.getElementById('cmObjet'+idx)?.value||'';
+      return `${n} (${t}, avec ${o})`;
+    }).join(', ');
+  }
 
-    // Fonction pour afficher un loader pendant requête IA
-    function showLoader(text = "L'intelligence artificielle réfléchit...") {
-      document.getElementById("app").innerHTML = `
-        <div class="loader">
-          <img src="https://media.giphy.com/media/3o7TKx2UxU8x9fzjMQ/giphy.gif" alt="Chargement" height="38" />
-          <p>${text}</p>
-        </div>
-      `;
-    }
+  const prompt = `
+Crée une histoire interactive pour un enfant de ${age} ans, découpée en ${nbEtapes} étapes.
+À chaque étape, écris un paragraphe adapté à un enfant de ${age} ans, puis propose 3 choix numérotés (1, 2 ou 3), sans révéler leurs conséquences.
 
-    // Fonction qui construit le prompt pour l'IA selon l'état actuel
-    function buildPrompt() {
-      return `
-Génère un paragraphe d'une histoire interactive pour enfant de 8 ans, avec :
+Paramètres de l’histoire :
+- Prénom du héros ou héroïne : ${prenom}
+- Type : ${typeHero}
+- Lieu : ${lieu}
+- Objet magique : ${objetMagique}
+- Type d’histoire : ${typeHistoire}${companionsTxt}
 
-- Héros/héroïne : ${state.heroName}, qui est un(e) ${state.heroType}
-- Lieu : ${state.place}
-- Objet magique : ${state.magicItem}
-- Type d'histoire : ${state.storyType}
-- Historique des choix précédents : ${JSON.stringify(state.history)}
+Pour chaque étape :
 
-Écris un paragraphe narratif clair, joyeux, adapté aux 8 ans, qui propose un petit défi ou un choix. Ensuite, propose 3 choix numérotés (1, 2, 3), sans révéler l’issue.
+1. Écris un paragraphe vivant et simple.
+2. Sous “CHOIX :”, liste les 3 options numérotées (1., 2., 3.), sans donner la suite, seulement les choix.
+3. Termine chaque étape par : « Quel est ton choix ? (Réponds 1, 2 ou 3 pour continuer l’aventure.) »
+Ne pose aucune question meta, ne propose jamais de lire plusieurs étapes d’un coup ou de s’arrêter, contente-toi de raconter et de demander le choix à chaque fois.
 
-Format exact :
-PARAGRAPHE
-CHOIX :
-1. ...
-2. ...
-3. ...
-`;
-    }
+Commence l’histoire dès maintenant.
+  `.trim();
+  document.getElementById('zonePrompt').value = prompt;
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.style.display = '';
+  copyBtn.classList.remove('copied');
+  copyBtn.textContent = 'Copier le prompt';
+}
 
-    // Fonction pour demander à l’IA la suite de l’histoire via OpenRouter
-    async function requestNextStep() {
-      showLoader();
+function copierPrompt() {
+  const txt = document.getElementById('zonePrompt').value;
+  if (txt.trim().length === 0) return;
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.classList.add('copied');
+    btn.textContent = 'Prompt copié !';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.textContent = 'Copier le prompt';
+    }, 1800);
+  });
+}
 
-      const prompt = buildPrompt();
+document.getElementById('formPromptGen').addEventListener('submit', function(e) {
+  e.preventDefault();
+  genererPrompt();
+});
+document.getElementById('copyBtn').addEventListener('click', copierPrompt);
 
-      try {
-        const response = await client.chat.completions.create({
-          model: "openai/gpt-3.5-turbo", // modèle accessible sans clé sur OpenRouter
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.8,
-          max_tokens: 500,
-        });
+// Remplissage dynamique/Sélection avec icônes pour main et compagnons
+remplirSelect(document.getElementById('typeHero'), TYPES_HERO);
+remplirSelect(document.getElementById('lieu'), LIEUX);
+remplirSelect(document.getElementById('objetMagique'), OBJETS);
+remplirSelect(document.getElementById('typeHistoire'), TYPES_HISTOIRE);
 
-        // Extraction contenu renvoyé
-        const content = response.choices[0].message.content;
-
-        // Sépare paragraphe et choix
-        const parts = content.split("CHOIX :");
-        state.currentParagraph = parts[0].trim();
-
-        // Extraction des choix en tableau
-        state.currentChoices = [];
-        if (parts[1]) {
-          parts[1]
-            .split("\n")
-            .map(line => line.trim())
-            .filter(line => /^\d\./.test(line))
-            .forEach(line => {
-              state.currentChoices.push(line.replace(/^\d\.\s*/, ""));
-            });
-        }
-
-        renderStory();
-      } catch (error) {
-        document.getElementById("app").innerHTML = `
-          <div>
-            <p><strong>Erreur lors de l'appel à l’IA :</strong> ${error.message}</p>
-            <button id="btnRetry">Réessayer</button>
-          </div>
-        `;
-        document.getElementById("btnRetry").onclick = () => requestNextStep();
-      }
-    }
-
-    // Affiche le paragraphe et les choix à l’écran
-    function renderStory() {
-      let html = `<div class="story">${state.currentParagraph}</div><div class="choices">`;
-      state.currentChoices.forEach((choice, i) => {
-        html += `<button onclick="choose(${i + 1})">${i + 1}. ${choice}</button>`;
-      });
-      html += "</div>";
-      document.getElementById("app").innerHTML = html;
-    }
-
-    // Gère le choix de l’utilisateur, stocke et relance la requête IA
-    async function choose(choiceNum) {
-      if (!state.gameActive) return;
-      state.history.push(choiceNum);
-      await requestNextStep();
-    }
-
-    // Initialisation : démarrer la config héros
-    renderSetup();
-
-    // Expose choix à global pour être accessible dans onclick inline
-    window.choose = choose;
-  </script>
+</script>
 </body>
 </html>
