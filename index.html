@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Histoire Interactive IA avec Puter.js</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: 'Comic Sans MS', cursive, sans-serif; background: #f0f6fc; padding: 0; margin: 0; }
+    .container { max-width: 480px; margin: 40px auto; background: #fff; border-radius: 18px; box-shadow: 0 8px 32px #0002; padding: 30px; }
+    h1 { text-align: center; color: #1cb69b; }
+    .question, .story { font-size: 1.18em; margin-bottom: 18px; }
+    label { display: block; margin: 13px 0 6px; }
+    input, select { padding: 8px; width: 90%; border-radius: 7px; border: 1px solid #bbb; }
+    button { margin: 14px 0; background: #1cb69b; color: #fff; font-size: 1.08em; border: none; border-radius: 8px; padding: 11px; width: 100%; transition: background 0.2s; cursor: pointer; }
+    button:hover { background: #148f7d; }
+    .choices button { margin: 8px 0; }
+    .loader { text-align: center; }
+  </style>
+  <!-- Ajout Puter.js -->
+  <script src="https://js.puter.com/v2/"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Histoire Interactive IA</h1>
+    <div id="app"></div>
+  </div>
+
+  <script>
+    // --- États et questions initiales ---
+    let state = {
+      step: 0, // 0-4 pour la création du perso, puis histoire interactive
+      heroName: "",
+      heroType: "",
+      place: "",
+      magicItem: "",
+      storyType: "",
+      historique: [],
+      dernierChoix: null,
+      paragraphe: "",
+      choix: [],
+      gameActive: false
+    };
+
+    // Création du héros (étapes initiales)
+    const setupSteps = [
+      {
+        label: "Choisis un prénom pour le héros ou l’héroïne.",
+        input: "text",
+        key: "heroName"
+      },
+      {
+        label: "Sélectionne un type de héros :",
+        input: "select",
+        key: "heroType",
+        options: ["Chevalier ou chevalière", "Fée", "Explorateur·rice", "Robot", "Pirate", "Magicien·ne"]
+      },
+      {
+        label: "Choisis le lieu de l’aventure :",
+        input: "select",
+        key: "place",
+        options: ["Forêt enchantée", "Château ancien", "Île mystérieuse", "Montagne magique", "École extraordinaire"]
+      },
+      {
+        label: "Choisis un objet magique :",
+        input: "select",
+        key: "magicItem",
+        options: ["Épée brillante", "Cape invisible", "Médaillon aux animaux", "Baguette magique", "Livre volant"]
+      },
+      {
+        label: "Quel type d’histoire ?",
+        input: "select",
+        key: "storyType",
+        options: ["Aventure mystère", "Histoire drôle", "Voyage", "Enquête", "École magique"]
+      }
+    ];
+
+    function renderSetup() {
+      const s = setupSteps[state.step];
+      let html = `<div class="question">${s.label}</div>`;
+      if (s.input === "text") {
+        html += `<input id="inpt" type="text" value="${state[s.key] || ""}" placeholder="Prénom..." />`;
+      } else if (s.input === "select") {
+        html += `<select id="inpt">` + s.options.map(opt =>
+          `<option${state[s.key]===opt?" selected":""}>${opt}</option>`
+        ).join('') + `</select>`;
+      }
+      html += `<button onclick="window.validerSetup()">Valider</button>`;
+      document.getElementById('app').innerHTML = html;
+    }
+
+    window.validerSetup = () => {
+      const v = document.getElementById('inpt').value.trim();
+      if (v.length) {
+        state[setupSteps[state.step].key] = v;
+        state.step++;
+        if (state.step < setupSteps.length) renderSetup();
+        else demarrerAventure();
+      }
+    }
+
+    const ai = new window.PuterAI();
+
+    async function demarrerAventure() {
+      state.gameActive = true;
+      state.historique = [];
+      state.dernierChoix = null;
+      await demanderSuiteInteraction();
+    }
+
+    async function demanderSuiteInteraction() {
+      afficherLoader("L'IA imagine la suite...");
+      const prompt = `
+Génère le prochain paragraphe d'une histoire interactive pour enfant de 8 ans. 
+Le héros/héroïne s'appelle ${state.heroName}, c'est un(e) ${state.heroType}, aventurant dans ${state.place}, avec un objet magique "${state.magicItem}". Le type d’histoire est : ${state.storyType}.
+Historique des choix déjà faits : ${JSON.stringify(state.historique)}.
+Nouveau tour :
+- Écris un paragraphe narratif adapté, qui propose un défi ou un choix à faire, encourageant l’imagination et adapté à 8 ans.
+- Propose ensuite 3 choix possibles numérotés 1, 2, 3, sans révéler le résultat des choix.
+- Utilise un ton clair, simple et joyeux.
+Répond exactement sous ce format :
+PARAGRAPHE
+CHOIX :
+1. Choix 1...
+2. Choix 2...
+3. Choix 3...`;
+
+      try {
+        const response = await ai.chat.completions.create({
+          messages: [{ role: "user", content: prompt }],
+          model: "gpt-4o",  // modèle fourni par Puter.js
+          temperature: 0.8,
+          max_tokens: 500
+        });
+
+        const texte = response.choices[0].message.content;
+
+        // Extraction texte + choix
+        const parts = texte.split("CHOIX :");
+        state.paragraphe = parts[0].trim();
+        state.choix = [];
+        if (parts[1]) {
+          parts[1]
+            .split(/\n/)
+            .map(l => l.trim())
+            .filter(l => /^(\d\.)/.test(l))
+            .forEach(l => state.choix.push(l.substring(3).trim()));
+        }
+        renderStory();
+      } catch (e) {
+        document.getElementById('app').innerHTML = `<div>Erreur lors de l'appel à l'IA : ${e.message}</div><button onclick="demarrerAventure()">Réessayer</button>`;
+      }
+    }
+
+    function renderStory() {
+      let html = `<div class="story">${state.paragraphe}</div><div class='choices'>`;
+      state.choix.forEach((c, i) =>
+        html += `<button onclick="window.choisir(${i + 1})">${i + 1}. ${c}</button>`);
+      html += `</div>`;
+      document.getElementById('app').innerHTML = html;
+    }
+
+    window.choisir = async (choix) => {
+      state.historique.push(choix);
+      state.dernierChoix = choix;
+      await demanderSuiteInteraction();
+    }
+
+    function afficherLoader(txt) {
+      document.getElementById('app').innerHTML =
+        `<div class="loader"><img src="https://media.giphy.com/media/3o7TKx2UxU8x9fzjMQ/giphy.gif" height="38" alt="..." /><br>${txt}</div>`;
+    }
+
+    renderSetup();
+  </script>
+</body>
+</html>
