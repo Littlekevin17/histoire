@@ -219,7 +219,7 @@ function genererPrompt() {
   // Gérer compagnons
   let companionsTxt = '';
   if (compagnonsUsed.length>0){
-    companionsTxt = '\\n- Compagnons : ';
+    companionsTxt = '\n- Compagnons : ';
     companionsTxt += compagnonsUsed.map(idx=>{
       const n=document.getElementById('cmName'+idx)?.value.trim()||'[Prénom]';
       const t=document.getElementById('cmType'+idx)?.value||'';
