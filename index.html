@@ -44,7 +44,7 @@
   <h1>Générateur de prompt d’histoire interactive</h1>
   <form id="formPromptGen" autocomplete="off">
     <label for="prenom">Prénom du héros/héroïne</label>
-    <input type="text" id="prenom" placeholder="Exemple : Jade" />
+    <input type="text" id="prenom" placeholder="Exemple : Jade, Roméo" />
 
     <label for="age">Âge de l’enfant</label>
     <div class="select-inline">
@@ -229,8 +229,19 @@ function genererPrompt() {
   }
 
   const prompt = `
-Crée une histoire interactive pour un enfant de ${age} ans, découpée en ${nbEtapes} étapes.
-À chaque étape, écris un paragraphe adapté à un enfant de ${age} ans, puis propose 3 choix numérotés (1, 2 ou 3), sans révéler leurs conséquences.
+Crée une histoire interactive pour un enfant de ${age} ans, découpée en ${nbEtapes} étapes. Attention : respecte bien ce nombre d'étapes !
+
+À chaque étape SAUF la dernière :
+- Commence par indiquer le numéro de l'étape ("ÉTAPE X sur ${nbEtapes}") ;
+- Écris un paragraphe vivant et simple adapté à un enfant de ${age} ans ;
+- Sous "CHOIX :", liste les 3 options numérotées (1., 2., 3.) pour permettre à l'enfant de poursuivre l'aventure, sans donner la suite ni révéler les conséquences de chaque choix ;
+- Termine chaque étape intermédiaire par : « Quel est ton choix ? (Réponds 1, 2 ou 3 pour continuer l’aventure.) »
+
+À la DERNIÈRE étape (étape ${nbEtapes}) :
+- Indique "ÉTAPE ${nbEtapes} sur ${nbEtapes} — FIN DE L’AVENTURE" ;
+- Rédige un paragraphe conclusif qui termine l'histoire et résout la quête ou le défi, offrant une vraie fin ;
+- Ne propose AUCUN choix à la dernière étape et indique clairement que l'histoire est achevée ;
+- Ajoute une dernière phrase du style : « Bravo ! L’aventure de ${prenom} est terminée. »
 
 Paramètres de l’histoire :
 - Prénom du héros ou héroïne : ${prenom}
@@ -239,11 +250,6 @@ Paramètres de l’histoire :
 - Objet magique : ${objetMagique}
 - Type d’histoire : ${typeHistoire}${companionsTxt}
 
-Pour chaque étape :
-
-1. Écris un paragraphe vivant et simple.
-2. Sous “CHOIX :”, liste les 3 options numérotées (1., 2., 3.), sans donner la suite, seulement les choix.
-3. Termine chaque étape par : « Quel est ton choix ? (Réponds 1, 2 ou 3 pour continuer l’aventure.) »
 Ne pose aucune question meta, ne propose jamais de lire plusieurs étapes d’un coup ou de s’arrêter, contente-toi de raconter et de demander le choix à chaque fois.
 
 Commence l’histoire dès maintenant.
