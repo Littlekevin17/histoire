@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Générateur de devinettes & énigmes ludiques</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="img/favicon.png" type="image/png">
+  <style>
+    body { font-family: 'Arial Rounded MT Bold', Arial, sans-serif; background: #eef8fb; margin: 0; padding: 0;}
+    .container { max-width: 480px; margin: 0 auto; background: #fff; border-radius: 15px; box-shadow: 0 4px 18px rgba(0,0,0,0.09); padding: 18px 5vw 22px 5vw; margin-top: 16px;}
+    h1 { text-align: center; color: #b449a7; font-size: 1.35em; margin: 8px 0 18px 0;}
+    label { display: block; margin: 11px 0 4px; font-weight: bold; font-size:1.04em; color: #223; }
+    input[type="text"], select {
+      width: 100%; padding: 11px; font-size: 1em; border: 1px solid #bbb; border-radius: 6px; margin-bottom: 6px; box-sizing: border-box;
+    }
+    .select-inline { display: flex; align-items: center; gap: 9px; margin-bottom: 5px; }
+    button {
+      margin-top: 14px; width: 100%; padding: 12px; background-color: #b449a7; border: none; border-radius: 8px; color: white;
+      font-size: 1.09em; font-weight: 600; cursor: pointer; transition: background 0.22s;
+    }
+    button:hover, button:active { background-color: #8e2e7a; }
+    #revealBtn { background: #f5c7ea; color: #b449a7; border: 1px solid #f5c7ea; margin-top:7px; font-size: 1em;}
+    #revealBtn.revealed { background: #dafcd6; color: #278d36; border-color: #dafcd6; }
+    .zoneEnigme { margin-top:19px; background:#f6f1fa; border:1px solid #ebd2fA; border-radius:11px; padding:13px 12px 16px 12px; min-height: 90px; font-size:1.06em;}
+    .zoneReponse { margin-top:8px; font-size:1.04em; background:#e1f7dc; color:#176b1e; border-radius:7px; padding:7px 10px; display:none;}
+    .footer { font-size: 0.91em; color: #777; text-align: center; margin-top: 16px; margin-bottom: 7px;}
+    @media (max-width: 600px) {
+      .container { padding-left:5vw; padding-right:5vw; padding-top:7px; padding-bottom:12px; font-size:1em; margin-top:2vw; }
+      h1 { font-size: 1.12em;}
+      label { font-size:1em;}
+      button { font-size: 1em; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Générateur de devinettes & énigmes</h1>
+  <form id="formEnigme" autocomplete="off" aria-label="Générateur de devinettes ludiques">
+    <label for="prenom">Prénom (facultatif pour personnaliser l’énigme)</label>
+    <input type="text" id="prenom" placeholder="Exemple : Jade" aria-label="Prénom" />
+
+    <label for="categorie">Catégorie de devinette</label>
+	<div class="option-group">
+	  <select id="categorie" aria-label="Catégorie">
+		<option value="animal">🦁 Animaux</option>
+		<option value="objet">🧰 Objets du quotidien</option>
+		<option value="logique">🧩 Petite logique</option>
+		<option value="culture">🌍 Culture générale</option>
+		<option value="fantaisie">🦄 Fantaisie & imaginaire</option>
+		<option value="surprenant">🎉 Surprenant/marrant</option>
+	  </select>
+	</div>
+
+    <label for="difficulte">Difficulté</label>
+    <div class="option-group">
+      <select id="difficulte" aria-label="Niveau de difficulté">
+        <option value="facile">🌱 Facile</option>
+        <option value="moyen" selected>🌼 Moyen</option>
+        <option value="difficile">🌳 Difficile</option>
+      </select>
+    </div>
+
+    <button type="submit">Générer une devinette</button>
+  </form>
+  <div class="zoneEnigme" id="zoneEnigme" aria-live="polite" tabindex="0">
+    <em>La devinette apparaîtra ici…</em>
+  </div>
+  <button id="revealBtn" type="button" style="display:none;">Révéler la réponse</button>
+  <div class="zoneReponse" id="zoneReponse"></div>
+  <div class="footer">
+    Tire une nouvelle devinette à chaque clic.<br />
+	<a href="index.html">Aller au Générateur de prompt d’histoire interactive</a>
+  </div>
+</div>
+<script>
+// === LISTE DES DEVINETTES ===
+// Chaque entrée : [catégorie, difficulté, question, réponse]
+const DEVINETTES = [
+  // --- Animaux ---
+  // Facile
+  ["animal","facile","Je suis petit, j’ai des ailes et je butine les fleurs. Qui suis-je ?","L’abeille"],
+  ["animal","facile","Je fais ouaf ouaf et je suis le meilleur ami de l’homme. Qui suis-je ?","Le chien"],
+  ["animal","facile","Je nage dans la mer et j’ai huit bras. Qui suis-je ?","La pieuvre"],
+  ["animal","facile","Je suis le roi de la jungle, qui suis-je ?","Le lion"],
+  ["animal","facile","Je nage dans l’eau, j’ai des écailles et des nageoires. Qui suis-je ?","Le poisson"],
+  ["animal","facile","J’ai une carapace et je marche très lentement. Qui suis-je ?","La tortue"],
+  ["animal","facile","Je suis grand et gris, j’ai une longue trompe. Qui suis-je ?","L’éléphant"],
+// --- Animaux ---
+// Moyen
+["animal","moyen","Je porte ma maison sur mon dos et avance lentement. Qui suis-je ?","L’escargot"],
+["animal","moyen","Je vole la nuit et j’échappe aux prédateurs grâce à l’écholocalisation. Qui suis-je ?","La chauve-souris"],
+["animal","moyen","Je saute, j’ai une poche sur mon ventre et j’habite en Australie. Qui suis-je ?","Le kangourou"],
+["animal","moyen","Je vole la nuit et j’aime les fruits, qui suis-je ?","La chauve-souris"],
+["animal","moyen","Je vis dans l’eau, j’ai un bec mais je ne suis pas un oiseau. Qui suis-je ?","L’ornithorynque"],
+["animal","moyen","Je peux changer de couleurs pour me cacher, qui suis-je ?","Le caméléon"],
+["animal","moyen","Je suis un oiseau coloré capable d'imiter les sons. Qui suis-je ?","Le perroquet"],
+["animal","moyen","J'habite dans une ruche et je produis du miel. Qui suis-je ?","L'abeille"],
+["animal","moyen","Je vis dans l'eau douce, j'ai des moustaches et je peux miauler. Qui suis-je ?","Le chat d'eau"],
+["animal","moyen","Je suis un grand oiseau qui plane dans le ciel. Qui suis-je ?","Le vautour"],
+["animal","moyen","On me trouve dans les forêts tropicales, je suis un singe à longue queue. Qui suis-je ?","Le singe capucin"],
+["animal","moyen","Je suis un carnivore marin à grandes dents. Qui suis-je ?","Le requin"],
+["animal","moyen","Je creuse des terriers et je suis connu pour ma rapidité. Qui suis-je ?","Le lapin"],
+["animal","moyen","Je vis dans les montagnes, j'ai des cornes en spirale. Qui suis-je ?","Le bouquetin"],
+["animal","moyen","Je suis un amphibien qui ressemble à une grenouille mais avec une queue. Qui suis-je ?","Le triton"],
+["animal","moyen","Je suis un insecte avec des ailes colorées et je vole de fleur en fleur. Qui suis-je ?","Le papillon"],
+["animal","moyen","Je suis un gros oiseau nocturne avec de grands yeux. Qui suis-je ?","La chouette"],
+["animal","moyen","Je suis un poisson qui peut changer de couleur et de forme. Qui suis-je ?","Le poisson-clown"],
+["animal","moyen","Je suis un mammifère marin connu pour mon chant mélodieux. Qui suis-je ?","La baleine"],
+["animal","moyen","Je suis un grand félin avec des taches sur mon pelage. Qui suis-je ?","Le léopard"],
+["animal","moyen","Je suis un reptile avec une langue fourchue et j'illumine la nuit. Qui suis-je ?","La salamandre"],
+
+// Difficile
+["animal","difficile","J’ai huit bras, j’aime l’eau salée et je crache de l’encre. Qui suis-je ?","La pieuvre"],
+["animal","difficile","J’ai des bosses sur le dos et je traverse le désert. Qui suis-je ?","Le dromadaire ou le chameau"],
+["animal","difficile","J’ai une crinière mais je ne suis pas un lion. Qui suis-je ?","Le cheval"],
+["animal","difficile","J’ai des pinces, je marche de côté, qui suis-je ?","Le crabe"],
+["animal","difficile","Je suis un oiseau incapable de voler mais très rapide à courir. Qui suis-je ?","L’autruche"],
+["animal","difficile","Je peux produire une lumière dans mon corps pour effrayer mes ennemis. Qui suis-je ?","La luciole"],
+["animal","difficile","Je vis dans l’Antarctique et je suis un excellent nageur à plumes. Qui suis-je ?","Le manchot"],
+["animal","difficile","Je suis un oiseau qui pèse plus de 150 kg et qui ne peut pas voler. Qui suis-je ?","L’autruche"],
+["animal","difficile","Je suis un insecte qui construit des structures complexes parfois appelées super-organismes. Qui suis-je ?","La fourmi"],
+["animal","difficile","Je suis un mammifère marin connu pour ma longue défense. Qui suis-je ?","Le narval"],
+["animal","difficile","Je suis une tortue géante qui vit sur des îles isolées. Qui suis-je ?","La tortue des Galápagos"],
+["animal","difficile","Je suis un animal au pelage rayé noir et blanc. Qui suis-je ?","Le zèbre"],
+["animal","difficile","J'ai une langue particulièrement longue et je peux attraper des insectes au vol. Qui suis-je ?","Le caméléon"],
+["animal","difficile","Je suis un amphibien qui peut régénérer ses membres. Qui suis-je ?","L’axolotl"],
+["animal","difficile","Je suis un grand singe connu pour ma force et mon intelligence. Qui suis-je ?","Le gorille"],
+["animal","difficile","Je suis un poisson préhistorique à dents acérées, souvent appelé 'requin vivant'. Qui suis-je ?","Le requin pèlerin"],
+["animal","difficile","Je peux marcher sur l'eau grâce à des poils très fins sur mes pattes. Qui suis-je ?","L'araignée d'eau"],
+["animal","difficile","Je suis le plus grand serpent venimeux du monde. Qui suis-je ?","Le mamba noir"],
+["animal","difficile","Je suis un oiseau marin qui peut plonger très profondément pour chercher sa nourriture. Qui suis-je ?","Le cormoran"],
+["animal","difficile","Je suis un petit oiseau connu pour mes longues migrations. Qui suis-je ?","La hirondelle"],
+["animal","difficile","Je suis un insecte nocturne attiré par la lumière des lampes. Qui suis-je ?","Le papillon de nuit"],
+["animal","difficile","Je suis un félin tacheté qui vit dans la forêt tropicale d'Amérique centrale et du Sud. Qui suis-je ?","Le jaguar"],
+["animal","difficile","Je suis un prince charmant de la forêt avec mes bois majestueux. Qui suis-je ?","Le cerf"],
+["animal","difficile","Je suis un insecte capable de voler en marche arrière. Qui suis-je ?","La libellule"],
+["animal","difficile","Je suis un mammifère marsupial d'Australie connu pour mes sauts rapides. Qui suis-je ?","Le wallaby"],
+["animal","difficile","Je suis un petit mammifère qui hiberne en hiver et ai un long museau pointu. Qui suis-je ?","Le hérisson"],
+["animal","difficile","Je suis un animal marin doté de tentacules et capable de changer de couleur. Qui suis-je ?","Le poulpe"],
+
+  // --- Objets ---
+  // Facile
+  ["objet","facile","On m’utilise pour écrire et j’ai un plumeau ou une mine. Qui suis-je ?","Le crayon"],
+  ["objet","facile","Je peux te garder au chaud en hiver. Qui suis-je ?","Un pull"],
+  ["objet","facile","On me met sur la tête pour se protéger du soleil. Qui suis-je ?","Un chapeau ou Une casquette"],
+  ["objet","facile","Je brille la nuit, je sers à voir dans l’obscurité. Qui suis-je ?","Une lampe de poche"],
+  ["objet","facile","Je sers à découper, j’ai deux lames et un manche. Qui suis-je ?","Les ciseaux"],
+  ["objet","facile","On m’accroche au mur, je peux être rond ou carré, et je donne l’heure. Qui suis-je ?","Une horloge"],
+// Moyen
+["objet","moyen","J’aide à garder la nourriture au frais. Qui suis-je ?","Le réfrigérateur"],
+["objet","moyen","On me trouve dans la cuisine pour mélanger ou battre. Qui suis-je ?","Le fouet"],
+["objet","moyen","J’affiche l’heure et souvent j’ai des aiguilles. Qui suis-je ?","Une horloge"],
+["objet","moyen","Je sers à lire, j’ai souvent beaucoup de pages. Qui suis-je ?","Un livre"],
+["objet","moyen","On me trouve dans la cuisine, je sers à faire chauffer la soupe. Qui suis-je ?","Une casserole"],
+["objet","moyen","Je me remplis avec de l’eau et parfois je fais des bulles. Qui suis-je ?","Un bain"],
+["objet","moyen","J’ai une mine mais je ne suis pas une grotte. Qui suis-je ?","Un crayon"],
+["objet","moyen","Je suis un ustensile pour manger les aliments liquides. Qui suis-je ?","Une cuillère"],
+["objet","moyen","On m’utilise pour faire du pain à la maison. Qui suis-je ?","Le four"],
+["objet","moyen","Je suis un appareil pour chauffer rapidement des aliments au micro-ondes. Qui suis-je ?","Le micro-ondes"],
+["objet","moyen","On m’utilise pour nettoyer les sols, souvent avec une serpillière. Qui suis-je ?","Le seau"],
+["objet","moyen","Je suis un objet pour écriture, souvent avec de l’encre. Qui suis-je ?","Le stylo"],
+["objet","moyen","Je garde la nourriture au chaud pendant un certain temps. Qui suis-je ?","Thermos"],
+["objet","moyen","Je suis utilisé pour couper les aliments en cuisine. Qui suis-je ?","Un couteau"],
+["objet","moyen","Je sers à battre les œufs en cuisine. Qui suis-je ?","Un batteur"],
+["objet","moyen","Je suis une boîte avec des aliments secs et des céréales. Qui suis-je ?","Une boîte de céréales"],
+["objet","moyen","On m’utilise pour garder les boissons fraîches dans un contenant. Qui suis-je ?","Une glacière"],
+["objet","moyen","Je suis un produit d'entretien pour laver la vaisselle. Qui suis-je ?","Le liquide vaisselle"],
+["objet","moyen","Je suis un appareil pour écouter de la musique ou la radio. Qui suis-je ?","Une radio"],
+["objet","moyen","Je suis un ustensile pour ouvrir les bouteilles. Qui suis-je ?","Un ouvre-bouteille"],
+// Difficile
+["objet","difficile","Je décompose les aliments grâce à des enzymes. Qui suis-je ?","Le mixeur"],
+["objet","difficile","Je transforme la lumière en électricité. Qui suis-je ?","Le panneau solaire"],
+["objet","difficile","Je fais du bruit quand on frappe dessus, souvent en métal. Qui suis-je ?","La cloche"],
+["objet","difficile","Je tourne et fait du bruit dans la porte. Qui suis-je ?","La clé"],
+["objet","difficile","J’aide à garder les secrets sous forme de lettres. Qui suis-je ?","Une enveloppe"],
+["objet","difficile","On me met sur le pain, je suis très sucrée. Qui suis-je ?","La confiture"],
+["objet","difficile","On me souffle pour fêter un anniversaire. Qui suis-je ?","La bougie"],
+["objet","difficile","Je suis un appareil qui produit de la chaleur par rayonnement, souvent dans une maison. Qui suis-je ?","Le radiateur"],
+["objet","difficile","Je suis un objet qui affiche l'heure en chiffres lumineux. Qui suis-je ?","L'horloge digitale"],
+["objet","difficile","Je suis un outil utilisé pour mesurer des distances avec précision. Qui suis-je ?","Le mètre ruban"],
+["objet","difficile","Je suis un objet utilisé pour sceller des documents importants avec de la cire. Qui suis-je ?","Le sceau"],
+["objet","difficile","Je suis un récipient utilisé pour stocker des liquides, souvent en verre ou en plastique. Qui suis-je ?","La bouteille"],
+["objet","difficile","Je suis un objet pour voir au loin, souvent utilisé par les marins. Qui suis-je ?","La longue-vue"],
+["objet","difficile","Je suis un instrument à vent utilisé dans les orchestres classiques. Qui suis-je ?","La flûte"],
+["objet","difficile","Je coupe du bois ou d'autres matériaux, souvent à la scie. Qui suis-je ?","La scie"],
+["objet","difficile","Je suis un appareil qui capture des images fixes ou en mouvement. Qui suis-je ?","La caméra"],
+["objet","difficile","Je suis un objet qui indique la température. Qui suis-je ?","Le thermomètre"],
+["objet","difficile","Je suis un ustensile utilisé pour gratter la peau. Qui suis-je ?","Le grattoir"],
+["objet","difficile","Je suis un outil pour écrire sur du tableau noir avec de la craie. Qui suis-je ?","Le bâton de craie"],
+["objet","difficile","Je suis un objet utilisé pour ranger les vêtements. Qui suis-je ?","L'armoire"],
+
+  // --- Logique ---
+  // Facile
+  ["logique","facile","Plus je suis grand, moins on me voit. Qui suis-je ?","L’ombre"],
+  ["logique","facile","Je suis plein de trous mais je retiens l’eau. Qui suis-je ?","L’éponge"],
+  ["logique","facile","Je grandis quand on m’enlève des morceaux. Qui suis-je ?","Un trou"],  
+  ["logique","facile","J’ai quatre pattes mais je ne marche jamais. Qui suis-je ?","Une chaise"],
+  ["logique","facile","Plus j’en prends, plus je laisse de traces. Qui suis-je ?","Les pas"],
+  ["logique","facile","Je suis petit le matin, grand à midi, et je disparais le soir. Qui suis-je ?","L’ombre"],
+  // Moyen
+  ["logique","moyen","Je peux être cassé sans être touché. Qui suis-je ?","Un secret"],
+  ["logique","moyen","Je suis une boîte sans clé, ni charnière, ni couvercle, mais qui contient un trésor. Qui suis-je ?","L’œuf"],
+  ["logique","moyen","Je commence par E, je finis par E, mais je n’ai qu’une lettre. Qui suis-je ?","Une enveloppe"],
+  ["logique","moyen","Je ne bouge jamais, mais je parcours tout le monde. Qui suis-je ?","Un timbre"],
+  // Difficile
+  ["logique","difficile","Qu’est-ce qui peut remplir une pièce sans prendre de place ?","La lumière"],
+  ["logique","difficile","Je marche sans jambes, je ris sans bouche, je pleure sans yeux. Qui suis-je ?","Une rivière"],
+  ["logique","difficile","Je suis un nombre impair. En enlevant une lettre, je deviens pair. Qui suis-je ?","Sept"],
+  ["logique","difficile","Quel animal porte toujours son habitation sur son dos ?","L’escargot"],
+  ["logique","difficile","Je tombe sans jamais me faire mal. Qui suis-je ?","La pluie"],
+  ["logique","difficile","Je peux remplir une pièce sans prendre de place. Qui suis-je ?","La lumière"],
+
+  // --- Culture générale ---
+  // Facile
+  ["culture","facile","Quelle forme a une balle de foot ?","Un cercle"],
+  ["culture","facile","Combien de jours y a-t-il dans une année ?","365 (ou 366)"],
+  ["culture","facile","De quelle couleur est le ciel par temps clair ?","Bleu"],
+  ["culture","facile","Quelle couleur obtient-on en mélangeant du bleu et du jaune ?","Vert"],
+  ["culture","facile","Combien de jours y a-t-il dans une semaine ?","Sept"],
+  ["culture","facile","Combien de côtés a un triangle ?","Trois"],
+  // Moyen
+  ["culture","moyen","Dans quelle ville se trouve la Tour Eiffel ?","Paris"],
+  ["culture","moyen","Quel est l’animal emblématique de l’Australie ?","Le kangourou"],
+  ["culture","moyen","Quel est le plus grand océan du monde ?","L’océan Pacifique"],
+  ["culture","moyen","Quel est le plus grand animal sur Terre ?","La baleine bleue"],
+  ["culture","moyen","Combien de pattes a une araignée ?","Huit"],
+  ["culture","moyen","Quel est l’animal qui pond des œufs et qui peut voler ?","L’oiseau"],
+  ["culture","moyen","Dans quelle mer se trouve la Corse ?","La mer Méditerranée"],  
+  // Difficile
+  ["culture","difficile","Qui a écrit 'Le Petit Prince' ?","Antoine de Saint-Exupéry"],
+  ["culture","difficile","Quelle est la capitale du Canada ?","Ottawa"],
+  ["culture","difficile","Dans quel pays se trouve le Machu Picchu ?","Pérou"],
+  ["culture","difficile","Quel est le plus long fleuve de France ?","La Loire"],
+  ["culture","difficile","Dans quel pays vit le panda géant ?","En Chine"],
+
+  // --- Fantaisie & imaginaire ---
+  // Facile
+  ["fantaisie","facile","Je suis un cheval blanc avec une corne magique. Qui suis-je ?","La licorne"],
+  ["fantaisie","facile","Je suis une créature volante qui jette des sorts. Qui suis-je ?","La fée"],  
+  ["fantaisie","facile","Je vole sur un balai la nuit dans les histoires. Qui suis-je ?","La sorcière"],
+  ["fantaisie","facile","J’ai des ailes colorées et j’aime les fleurs. Qui suis-je ?","Le papillon"],
+  // Moyen
+  ["fantaisie","moyen","Je suis un serpent géant qui protège un trésor. Qui suis-je ?","Le dragon"],
+  ["fantaisie","moyen","Je vis dans un château hanté et je fais peur aux visiteurs. Qui suis-je ?","Le fantôme"],
+  ["fantaisie","moyen","Je souffle du feu et garde des trésors. Qui suis-je ?","Le dragon"],
+  ["fantaisie","moyen","Je vis dans les contes sous l’eau, j’ai une queue de poisson. Qui suis-je ?","La sirène"],
+  // Difficile
+  ["fantaisie","difficile","Je suis un génie enfermé dans une lampe magique. Qui suis-je ?","Le génie"],
+  ["fantaisie","difficile","Je suis une cité volante dans les nuages. Qui suis-je ?","La cité céleste"],
+  ["fantaisie","difficile","Je suis invisible, j’exauce des vœux, qui suis-je ?","Le génie de la lampe"],
+  ["fantaisie","difficile","Je vis dans le froid et je construis des igloos. Qui suis-je ?","Un esquimau"],
+
+  // --- Surprenant & marrant ---
+  // Facile
+  ["surprenant","facile","Qu’est-ce qui est toujours devant toi mais qu’on ne peut jamais attraper ?","Le futur"],
+  ["surprenant","facile","Je suis invisible mais tout le monde me ressens. Qui suis-je ?","Le vent"],  
+  ["surprenant","facile","Tu peux m’entendre, mais tu ne peux pas me voir, et je disparaîs si tu parles. Qui suis-je ?","Le silence"],
+  ["surprenant","facile","Je commence par un pied et finis par un pied, mais je ne marche pas. Qui suis-je ?","Le compas"],
+  // Moyen
+  ["surprenant","moyen","Qu’est-ce qui a des dents mais ne mord jamais ?","Le peigne"],
+  ["surprenant","moyen","Qu’est-ce qui monte mais ne descend jamais ?","L’âge"],
+  ["surprenant","moyen","Je peux sauter plus haut qu’une maison. Qui suis-je ?","Toutes les choses, car les maisons ne sautent pas !"],
+  ["surprenant","moyen","Qu’est-ce qui fait le tour de la maison sans bouger ?","Le mur"],
+  // Difficile
+  ["surprenant","difficile","Qu’est-ce qui est toujours cassé quand on parle ?","Le silence"],
+  ["surprenant","difficile","Plus on en prend, plus on en laisse. Qui suis-je ?","Les pas"],
+  ["surprenant","difficile","Je me casse à chaque mot prononcé. Qui suis-je ?","Le silence"],
+  ["surprenant","difficile","Qu’est-ce qui n’a ni tête ni queue mais a un corps ?","La bouteille"]
+];
+
+// Shuffle utilitaire
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function pickRiddle(cat, diff) {
+  const filt = DEVINETTES.filter(
+    d => d[0] === cat && d[1] === diff
+  );
+  if (filt.length === 0) return null;
+  return shuffle(filt)[0];
+}
+function genererDevinette(evt) {
+  if(evt) evt.preventDefault();
+  document.getElementById('zoneReponse').style.display = 'none';
+  document.getElementById('revealBtn').style.display = 'none';
+  document.getElementById('revealBtn').classList.remove('revealed');
+  let prenom = document.getElementById('prenom').value.trim();
+  let cat = document.getElementById('categorie').value;
+  let diff = document.getElementById('difficulte').value;
+
+  let devinette = pickRiddle(cat, diff);
+  if(!devinette) {
+    document.getElementById('zoneEnigme').innerHTML = "<em>Pas (encore) de devinette pour cette catégorie et difficulté&#8239;!</em>";
+    return;
+  }
+  let question = devinette[2];
+  if(prenom) question = question.replace(/Qui suis-je/g, prenom+", devine qui c'est");
+
+  document.getElementById('zoneEnigme').innerText = question;
+  document.getElementById('zoneEnigme').focus();
+  // Stocke la réponse pour le bouton révéler
+  document.getElementById('revealBtn').style.display = '';
+  document.getElementById('zoneReponse').innerText = devinette[3];
+  document.getElementById('revealBtn').onclick = function() {
+    document.getElementById('zoneReponse').style.display = 'block';
+    document.getElementById('revealBtn').classList.add('revealed');
+  };
+}
+document.getElementById('formEnigme').addEventListener('submit', genererDevinette);
+
+// Entrée clavier = génère la devinette
+document.getElementById('prenom').addEventListener('keydown', function(e){
+  if(e.key==='Enter'){ e.preventDefault(); document.getElementById('categorie').focus(); }
+});
+// Auto-focus
+window.onload = ()=>document.getElementById('prenom').focus();
+</script>
+</body>
+</html>
